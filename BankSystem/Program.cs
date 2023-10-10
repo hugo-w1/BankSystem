@@ -7,117 +7,6 @@ using System.Threading.Tasks;
 namespace BankSystem
 {
 
-	class Generator
-	{
-		static Random rng = new Random();
-
-		public static string AccountID(int length)
-		{
-			string chars = "qwertyuiopasdfghjklzxcvbnm1234567890";
-			string tmpID = "";
-			for (int i = 0; i < length; i++)
-			{
-				tmpID += chars[rng.Next(0, chars.Length)];
-			}
-			return tmpID;
-		}
-
-		public static string CardNumber()
-		{
-			string tmp = "";
-			for (int i = 0; i < 4; i++)
-			{
-				for (int j = 0; j < 4; j++)
-				{
-					tmp += rng.Next(0, 9).ToString();
-				}
-				tmp += " ";
-			}
-			return tmp;
-		}
-
-		public static string Ccv(int length)
-		{
-			string tmpCode = "";
-			for (int i = 0; i < length; i++)
-			{
-				tmpCode += rng.Next(0, 9).ToString();
-			}
-			return tmpCode;
-		}
-
-	}
-
-	abstract class BankCard
-	{
-		private readonly string cardNumber = Generator.CardNumber();
-		private readonly string ccv = Generator.Ccv(3);
-		private readonly string pinCode = Generator.Ccv(4);
-		private readonly string expirartionDate = DateTime.Now.Month.ToString() + "/" + DateTime.Now.AddYears(4).Year.ToString();
-
-		public string CardNumber
-		{
-			get { return cardNumber; }
-		}
-		public string Ccv
-		{
-			get { return ccv; }
-		}
-		public string PinCode
-		{
-			get { return pinCode; }
-		}
-		public string ExpirationDate
-		{
-			get { return expirartionDate; }
-		}
-	}
-
-	class BankAccount : BankCard
-	{
-		private string accountHolder;
-		private readonly string accountID = Generator.AccountID(4);
-		private string bankName;
-		private double balance;
-		private double transactionFee;
-
-		public string AccountHolder
-		{
-			get { return accountHolder; }
-			set { accountHolder = value; }
-		}
-		public string AccountID
-		{
-			get { return accountID; }
-		}
-		public string BankName
-		{
-			get { return bankName; }
-			set { bankName = value; }
-		}
-		public double Balance
-		{
-			get { return balance; }
-			set { balance = value; }
-		}
-		public double TransactionFee
-		{
-			get { return transactionFee; }
-			set
-			{
-				if (value <= 0.05)
-				{
-					transactionFee = value;
-				}
-				else
-				{
-					transactionFee = 0.05;
-				}
-			}
-		}
-
-	}
-
 	class SwedBank : BankAccount
 	{
 		public SwedBank(string initalHolder, double initalBalance)
@@ -129,10 +18,125 @@ namespace BankSystem
 		}
 	}
 
-	class Program
+
+	class CLI
 	{
 
-		static void PrintAccount(BankAccount account)
+		public static List<BankAccount> Accounts = DataSaver.ReadFromJsonFile<List<BankAccount>>("./data.json");
+
+
+		/// <summary>
+		/// Load the accounts from the json file.
+		/// </summary>
+		public static void LoadAccounts()
+		{
+			Accounts = DataSaver.ReadFromJsonFile<List<BankAccount>>("./data.json");
+		}
+		public static void StartMeny()
+		{
+
+
+			Console.Clear();
+			Console.WriteLine("1) Create New Account");
+			Console.WriteLine("2) Views Accounts");
+			Console.WriteLine("3) View Transacton History");
+
+			while (true)
+			{
+				try
+				{
+					int option = int.Parse(Console.ReadLine());
+
+					switch (option)
+					{
+						case 1:
+							CreateAccount();
+							break;
+						case 2:
+							ViewAccounts(Accounts);
+							break;
+						default:
+							Console.WriteLine("Chose from 1-3");
+							break;
+					}
+				}
+				catch (Exception e)
+				{
+					Console.WriteLine(e.Message);
+				}
+			}
+		}
+
+		public static void CreateAccount()
+		{
+			Console.ForegroundColor = ConsoleColor.Blue;
+			Console.WriteLine("-Account Creation-");
+			Console.ForegroundColor = ConsoleColor.White;
+
+			Console.Write("Account Holder: ");
+			string tmpAccountHolder = Console.ReadLine();
+			double tmpBalance = 0;
+			while (true)
+			{
+				try
+				{
+					Console.Write("Account Balance: ");
+					tmpBalance = double.Parse(Console.ReadLine());
+					break;
+				}
+				catch (Exception e)
+				{
+					Console.WriteLine(e.Message);
+				}
+			}
+			int tmpBank = 0;
+			while (true)
+			{
+				Console.WriteLine("Chose Bank: ");
+				Console.WriteLine("[1 Swedbank] [2 SEB] [3 Nordea]");
+				try
+				{
+					tmpBank = int.Parse(Console.ReadLine());
+					if (tmpBank < 1 || tmpBank > 3)
+					{
+						throw new Exception("Chose between 1 -3");
+					}
+					else
+					{
+						break;
+					}
+				}
+				catch (Exception e)
+				{
+					Console.WriteLine(e.Message);
+				}
+			}
+
+			switch (tmpBank)
+			{
+				case 1:
+					Accounts.Add(new SwedBank(tmpAccountHolder, tmpBalance));
+					break;
+			}
+
+			//Save the new account to the json file.
+			DataSaver.WriteToJsonFile<List<BankAccount>>("./data.json", Accounts);
+		}
+
+		public static void ViewAccounts(List<BankAccount> Accounts)
+		{
+			Console.Clear();
+
+			for (int i = 0; i < Accounts.Count; i++)
+			{
+				Console.WriteLine($"{i}: {Accounts[i].AccountHolder} ID: {Accounts[i].AccountID} Balance: ${Accounts[i].Balance}");
+			}
+			Console.WriteLine("\nClick Return To Return Home");
+			Console.ReadLine();
+			//StartMeny(Accounts);
+		}
+
+		public static void PrintAccount(BankAccount account)
 		{
 			Console.WriteLine($"Holder: \t{account.AccountHolder}");
 			Console.WriteLine($"Account ID: \t{account.AccountID}");
@@ -146,19 +150,21 @@ namespace BankSystem
 
 
 		}
+	}
+
+
+	class Program
+	{
+		public static List<BankAccount> Accounts = new List<BankAccount>();
+
 
 		static void Main(string[] args)
 		{
 
-			List<BankAccount> accounts = new List<BankAccount>();
 
-			accounts.Add(new SwedBank("Hugo", 200));
-			accounts.Add(new SwedBank("Gutav", 180));
 
-			foreach(BankAccount account in accounts)
-			{
-				PrintAccount(account);
-			}
+
+			CLI.StartMeny();
 
 			Console.ReadLine();
 		}
