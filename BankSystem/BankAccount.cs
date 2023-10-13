@@ -15,10 +15,11 @@ namespace BankSystem
 	class BankAccount : BankCard
 	{
 		private string accountHolder;
-		private readonly string accountID = Generator.AccountID(4);
+		private string accountID;
 		private string bankName;
 		private double balance;
 		private double transactionFee;
+
 
 		/// <summary>
 		/// The name of the account holder
@@ -34,6 +35,7 @@ namespace BankSystem
 		public string AccountID
 		{
 			get { return accountID; }
+			set { accountID = value; }
 		}
 
 		/// <summary>

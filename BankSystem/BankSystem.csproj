@@ -48,6 +48,10 @@
   <ItemGroup>
     <Compile Include="BankAccount.cs" />
     <Compile Include="BankCard.cs" />
+    <Compile Include="CLI.cs" />
+    <Compile Include="SEB.cs" />
+    <Compile Include="Nordea.cs" />
+    <Compile Include="SwedBank.cs" />
     <Compile Include="DataSaver.cs" />
     <Compile Include="Generator.cs" />
     <Compile Include="Program.cs" />
