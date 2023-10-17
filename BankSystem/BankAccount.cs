@@ -18,6 +18,7 @@ namespace BankSystem
 		private string accountID;
 		private string bankName;
 		private double balance;
+		private List<string> transactionHistory = new List<string>();
 		private double transactionFee;
 
 
@@ -56,8 +57,17 @@ namespace BankSystem
 		}
 
 		/// <summary>
+		/// Transaction history. Stores the timestamps, user and amound of either reciving or sending money.
+		/// </summary>
+		public List<string> TransactionHistory
+		{
+			get { return transactionHistory; }
+		}
+
+
+		/// <summary>
 		/// Tranasaction fee. Should not be more than 5%.
-		/// The transacion fee gets decucted from the amomunt sent. Ex if you send 100 with the fee of 5% the reciver recives 95
+		/// The transacion fee gets decucted from the amomunt sent. Ex if you send 100 with the fee of 5% the reciver recives 95 and the other 5 goes in to the void.
 		/// </summary>
 		public double TransactionFee
 		{

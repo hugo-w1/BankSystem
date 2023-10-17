@@ -57,6 +57,9 @@ namespace BankSystem
 						case 3:
 							Transaction();
 							break;
+						case 4:
+							ViewHistory();
+							break;
 						default:
 							Console.WriteLine("Chose from 1-4");
 							break;
@@ -71,6 +74,22 @@ namespace BankSystem
 					Console.WriteLine(e.Message);
 				}
 			}
+		}
+
+		public static BankAccount FindAccount(string id)
+		{
+			BankAccount tmpAccount = null;
+
+			for (int i = 0; i <= Accounts.Count -1; i++)
+			{
+				if (id == Accounts[i].AccountID)
+				{
+					tmpAccount = Accounts[i];
+					Console.WriteLine($"Found Account {Accounts[i].AccountHolder} [{Accounts[i].AccountID}]");
+					return tmpAccount;
+				}
+			}
+			return null;
 		}
 
 		public static void Transaction()
@@ -88,91 +107,103 @@ namespace BankSystem
 				Console.ReadKey();
 				StartMeny();
 			}
+
+			string tmpSender = "";
+			string tmpReciver = "";
+			BankAccount sender = null;
+			BankAccount reciver = null;
+
+
+				while (true)
+				{
+					Console.Write("Sender ID: ");
+					tmpSender = Console.ReadLine();
+					sender = FindAccount(tmpSender);
+					if (sender == null)
+					{
+						Console.ForegroundColor = ConsoleColor.Red;
+						Console.WriteLine($"Could not find account [{tmpSender}]");
+						Console.ForegroundColor = ConsoleColor.Blue;
+					}
+					else
+					{
+						break;
+					}
+				}
+
+
 			while (true)
 			{
 
-				string tmpSender = "";
-				string tmpReciver = "";
-				BankAccount sender = null;
-				BankAccount reciver = null;
-
-
-
-				while (true)
+				Console.Write("Reciver ID: ");
+				tmpReciver = Console.ReadLine();
+				if (tmpReciver == tmpSender)
 				{
-					while (true)
-					{
-						Console.Write("Sender ID: ");
-						tmpSender = Console.ReadLine();
-						for (int i = 0; i <= Accounts.Count; i++)
-						{
-							if (i == Accounts.Count)
-							{
-								Console.WriteLine($"Could not find account [{tmpSender}]");
-								break;
-							}
-							if (tmpSender == Accounts[i].AccountID)
-							{
-								sender = Accounts[i];
-								Console.WriteLine($"Found Account {Accounts[i].AccountHolder} [{Accounts[i].AccountID}]");
-								goto next;
-							}
-						}
-						continue;
-					next:
-						break;
-					}
-
-					Console.Write("Reciver ID: ");
-					tmpReciver = Console.ReadLine();
-					if (tmpReciver == tmpSender)
-					{
-						throw new Exception("Cant send to the same account");
-					}
-					for (int i = 0; i < Accounts.Count + 1; i++)
-					{
-						if (i == Accounts.Count)
-						{
-							Console.WriteLine($"Could not find account [{tmpSender}]");
-							break;
-						}
-						if (tmpReciver == Accounts[i].AccountID)
-						{
-							reciver = Accounts[i];
-							Console.WriteLine($"Found Account {Accounts[i].AccountHolder} [{Accounts[i].AccountID}]");
-						}
-					}
+					Console.ForegroundColor = ConsoleColor.Red;
+					Console.WriteLine("Cant send to the same account");
+					Console.ForegroundColor = ConsoleColor.Blue;
+				}
+				reciver = FindAccount(tmpReciver);
+				if (reciver == null)
+				{
+					Console.ForegroundColor = ConsoleColor.Red;
+					Console.WriteLine($"Could not find account [{tmpReciver}]");
+					Console.ForegroundColor = ConsoleColor.Blue;
+				}
+				else
+				{
 					break;
 				}
 
-				double tmpAmount = 0;
-				while (true)
-				{
-					try
-					{
-						Console.Write("Amount: ");
-						tmpAmount = double.Parse(Console.ReadLine());
-						if (tmpAmount > sender.Balance)
-						{
-							throw new Exception("Insufficient funds");
-						}
-						else
-						{
-							sender.Balance -= tmpAmount;
-							reciver.Balance += tmpAmount;
 
-							Console.ForegroundColor = ConsoleColor.Green;
-							Console.WriteLine($"{sender.AccountHolder} sent ${tmpAmount} to {reciver.AccountHolder}");
-							Console.ForegroundColor = ConsoleColor.White;
-						}
-					}
-					catch (Exception e)
+			}
+
+
+
+
+			double tmpAmount = 0;
+			while (true)
+			{
+				try
+				{
+					Console.Write("Amount: ");
+					tmpAmount = double.Parse(Console.ReadLine());
+					if (tmpAmount > sender.Balance)
 					{
-						Console.WriteLine(e.Message);
+						throw new Exception("Insufficient funds");
 					}
+					else
+					{
+						sender.Balance -= tmpAmount;
+						reciver.Balance += tmpAmount;
+
+						sender.TransactionHistory.Add($"[{DateTime.Now}] - Sent {tmpAmount} to {reciver.AccountHolder} [{reciver.AccountID}]");
+						reciver.TransactionHistory.Add($"[{DateTime.Now}] - Recived {tmpAmount} from {sender.AccountHolder} [{sender.AccountID}]");
+
+
+						Console.ForegroundColor = ConsoleColor.Green;
+						Console.WriteLine($"{sender.AccountHolder} sent ${tmpAmount} to {reciver.AccountHolder}");
+						Console.ForegroundColor = ConsoleColor.White;
+
+						//Save to the json file.
+						DataSaver.WriteToJsonFile<List<BankAccount>>("./data.json", Accounts, false);
+
+						break;
+					}
+				}
+				catch (Exception e)
+				{
+					Console.ForegroundColor = ConsoleColor.Red;
+					Console.WriteLine(e.Message);
+					Console.ForegroundColor = ConsoleColor.Blue;
 
 				}
 			}
+
+			Console.WriteLine("Click return to return home");
+			Console.ReadLine();
+			StartMeny();
+
 		}
 
 		public static void CreateAccount()
@@ -240,8 +271,8 @@ namespace BankSystem
 					break;
 			}
 
-			//Give the account an ID.
-			Accounts[Accounts.Count].AccountID = Generator.AccountID(4);
+			//Assign an ID to the account.
+			Accounts[Accounts.Count - 1].AccountID = Generator.AccountID(4);
 
 			//Save the new account to the json file.
 			DataSaver.WriteToJsonFile<List<BankAccount>>("./data.json", Accounts, false);
@@ -253,6 +284,54 @@ namespace BankSystem
 			Console.ReadLine();
 			//Go back to start meny
 			StartMeny();
+
+		}
+
+		public static void ViewHistory()
+		{
+			BankAccount account = null;
+			if (Accounts.Count < 1)
+			{
+				Console.ForegroundColor = ConsoleColor.Red;
+				Console.WriteLine("You need at least one account to see");
+				Console.ForegroundColor = ConsoleColor.White;
+			}
+			else
+			{
+				while (true)
+				{
+					Console.Write("Account Id: ");
+					string tmpId = Console.ReadLine();
+					account = FindAccount(tmpId);
+					if (account == null)
+					{
+						Console.WriteLine($"Could not find account {tmpId}");
+					}
+					else
+					{
+						break;
+					}
+				}
+				Console.Clear();
+				Console.ForegroundColor = ConsoleColor.Blue;
+				Console.WriteLine($"- {account.AccountHolder}s Transaction History -");
+
+				for (int i = 0; i < account.TransactionHistory.Count; i++)
+				{
+					//Make Odd entries White bg and black fg for better Readability.
+					if (i % 2 == 0)
+					{
+						Console.BackgroundColor = ConsoleColor.White;
+						Console.ForegroundColor = ConsoleColor.Black;
+					}
+					Console.WriteLine($"{i + 1} {account.TransactionHistory[i]}");
+					Console.BackgroundColor = ConsoleColor.Black;
+					Console.ForegroundColor = ConsoleColor.White;
+				}
+				Console.WriteLine("\nClick Return To Return Home");
+				Console.ReadLine();
+				StartMeny();
+			}
 
 		}
 
@@ -268,7 +347,7 @@ namespace BankSystem
 					Console.BackgroundColor = ConsoleColor.White;
 					Console.ForegroundColor = ConsoleColor.Black;
 				}
-				Console.WriteLine($"{i}: {Accounts[i].AccountHolder}  [{Accounts[i].AccountID}] Balance: ${Accounts[i].Balance}");
+				Console.WriteLine($"{i + 1}: {Accounts[i].AccountHolder}  [{Accounts[i].AccountID}] Balance: ${Accounts[i].Balance}");
 
 				Console.BackgroundColor = ConsoleColor.Black;
 				Console.ForegroundColor = ConsoleColor.White;
