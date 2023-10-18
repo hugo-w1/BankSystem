@@ -7,6 +7,10 @@ using System.Threading.Tasks;
 
 namespace BankSystem
 {
+
+	/// <summary>
+	/// The CLI class handels all of the inputs to the program.
+	/// </summary>
 	class CLI
 	{
 
@@ -35,10 +39,12 @@ namespace BankSystem
 			LoadAccounts();
 
 			Console.Clear();
+			Console.ResetColor();
 			Console.WriteLine("1) New Account");
 			Console.WriteLine("2) View Accounts");
 			Console.WriteLine("3) New Transaction");
 			Console.WriteLine("4) View Transacton History");
+			Console.WriteLine("5) View Account Details");
 
 			while (true)
 			{
@@ -60,8 +66,11 @@ namespace BankSystem
 						case 4:
 							ViewHistory();
 							break;
+						case 5:
+							PrintAccountDetails();
+							break;
 						default:
-							Console.WriteLine("Chose from 1-4");
+							Console.WriteLine("Chose from 1-5");
 							break;
 					}
 					if (option > 0 && option < 4)
@@ -76,11 +85,17 @@ namespace BankSystem
 			}
 		}
 
-		public static BankAccount FindAccount(string id)
+
+		/// <summary>
+		/// Find a bankaccount with a specific id
+		/// </summary>
+		/// <param name="id">The id of the bankaccount you are looking for</param>
+		/// <returns>returns the class object of the bankaccount with the id</returns>
+		private static BankAccount FindAccount(string id)
 		{
 			BankAccount tmpAccount = null;
 
-			for (int i = 0; i <= Accounts.Count -1; i++)
+			for (int i = 0; i <= Accounts.Count - 1; i++)
 			{
 				if (id == Accounts[i].AccountID)
 				{
@@ -92,11 +107,15 @@ namespace BankSystem
 			return null;
 		}
 
-		public static void Transaction()
+
+		/// <summary>
+		/// The trasaction interface asks the user for all of the needed information inorder to make a transaction.
+		/// </summary>
+		private static void Transaction()
 		{
 
 			Console.ForegroundColor = ConsoleColor.Blue;
-			Console.WriteLine("-Transaction-");
+			Console.WriteLine("-Transaction- Escape to abort");
 			if (Accounts.Count < 2)
 			{
 				Console.ForegroundColor = ConsoleColor.Red;
@@ -114,29 +133,29 @@ namespace BankSystem
 			BankAccount reciver = null;
 
 
-				while (true)
+			while (true)
+			{
+				Console.Write("Sender ID: ");
+				tmpSender = readLineWithCancel();
+				sender = FindAccount(tmpSender);
+				if (sender == null)
 				{
-					Console.Write("Sender ID: ");
-					tmpSender = Console.ReadLine();
-					sender = FindAccount(tmpSender);
-					if (sender == null)
-					{
-						Console.ForegroundColor = ConsoleColor.Red;
-						Console.WriteLine($"Could not find account [{tmpSender}]");
-						Console.ForegroundColor = ConsoleColor.Blue;
-					}
-					else
-					{
-						break;
-					}
+					Console.ForegroundColor = ConsoleColor.Red;
+					Console.WriteLine($"Could not find account [{tmpSender}]");
+					Console.ForegroundColor = ConsoleColor.Blue;
 				}
+				else
+				{
+					break;
+				}
+			}
 
 
 			while (true)
 			{
 
 				Console.Write("Reciver ID: ");
-				tmpReciver = Console.ReadLine();
+				tmpReciver = readLineWithCancel();
 				if (tmpReciver == tmpSender)
 				{
 					Console.ForegroundColor = ConsoleColor.Red;
@@ -167,7 +186,7 @@ namespace BankSystem
 				try
 				{
 					Console.Write("Amount: ");
-					tmpAmount = double.Parse(Console.ReadLine());
+					tmpAmount = double.Parse(readLineWithCancel());
 					if (tmpAmount > sender.Balance)
 					{
 						throw new Exception("Insufficient funds");
@@ -206,7 +225,11 @@ namespace BankSystem
 
 		}
 
-		public static void CreateAccount()
+		/// <summary>
+		/// The CLI interface for account creation.
+		/// It asks the user for all the information needed to create a new object from the bankaccount class.
+		/// </summary>
+		private static void CreateAccount()
 		{
 			Console.ForegroundColor = ConsoleColor.Blue;
 			Console.WriteLine("-Account Creation-");
@@ -216,7 +239,7 @@ namespace BankSystem
 			while (true)
 			{
 				Console.Write("Account Holder: ");
-				tmpAccountHolder = Console.ReadLine();
+				tmpAccountHolder = readLineWithCancel();
 				if (tmpAccountHolder.Trim() != "")
 				{
 					break;
@@ -227,12 +250,18 @@ namespace BankSystem
 				try
 				{
 					Console.Write("Account Balance: ");
-					tmpBalance = double.Parse(Console.ReadLine());
+					tmpBalance = double.Parse(readLineWithCancel());
+					if (tmpBalance > 1000000)
+					{
+						throw new Exception("You cant have over one million");
+					}
 					break;
 				}
 				catch (Exception e)
 				{
+					Console.ForegroundColor = ConsoleColor.Red;
 					Console.WriteLine(e.Message);
+					Console.ResetColor();
 				}
 			}
 			int tmpBank = 0;
@@ -242,7 +271,7 @@ namespace BankSystem
 				Console.WriteLine("[1 Swedbank] [2 SEB] [3 Nordea]");
 				try
 				{
-					tmpBank = int.Parse(Console.ReadLine());
+					tmpBank = int.Parse(readLineWithCancel());
 					if (tmpBank < 1 || tmpBank > 3)
 					{
 						throw new Exception("Chose between 1-3");
@@ -287,7 +316,10 @@ namespace BankSystem
 
 		}
 
-		public static void ViewHistory()
+		/// <summary>
+		/// Asks the users for an ID. Then shows the transaction history from the user with that id.
+		/// </summary>
+		private static void ViewHistory()
 		{
 			BankAccount account = null;
 			if (Accounts.Count < 1)
@@ -301,7 +333,7 @@ namespace BankSystem
 				while (true)
 				{
 					Console.Write("Account Id: ");
-					string tmpId = Console.ReadLine();
+					string tmpId = readLineWithCancel();
 					account = FindAccount(tmpId);
 					if (account == null)
 					{
@@ -335,7 +367,11 @@ namespace BankSystem
 
 		}
 
-		public static void ViewAccounts(List<BankAccount> Accounts)
+		/// <summary>
+		/// Displays all of the accounts in a list.
+		/// </summary>
+		/// <param name="Accounts">The accounts to show</param>
+		private static void ViewAccounts(List<BankAccount> Accounts)
 		{
 			Console.Clear();
 
@@ -358,8 +394,31 @@ namespace BankSystem
 			StartMeny();
 		}
 
-		public static void PrintAccount(BankAccount account)
+
+		/// <summary>
+		/// Asks the user for an id.
+		/// Then prints out all of the details of the specified account.
+		/// </summary>
+		private static void PrintAccountDetails()
 		{
+			BankAccount account = null;
+			while (true)
+			{
+				Console.Write("Account ID: ");
+				string accoutid = readLineWithCancel();
+				account = FindAccount(accoutid);
+				if (account == null)
+				{
+					Console.ForegroundColor = ConsoleColor.Red;
+					Console.WriteLine($"Could not find account [{accoutid}]");
+					Console.ForegroundColor = ConsoleColor.Blue;
+				}
+				else
+				{
+					break;
+				}
+			}
+
 			Console.WriteLine($"Holder: \t{account.AccountHolder}");
 			Console.WriteLine($"Account ID: \t{account.AccountID}");
 			Console.WriteLine($"Tranaction: \t{account.TransactionFee}%");
@@ -370,7 +429,51 @@ namespace BankSystem
 			Console.WriteLine($"Exp Date: \t{account.ExpirationDate}");
 			Console.WriteLine("__________________________________");
 
+			Console.WriteLine("Click return to return home");
+			Console.ReadLine();
+			StartMeny();
 
+		}
+
+		private static string readLineWithCancel()
+		{
+			string result = null;
+
+			StringBuilder buffer = new StringBuilder();
+
+			//The key is read passing true for the intercept argument to prevent
+			//any characters from displaying when the Escape key is pressed.
+			ConsoleKeyInfo info = Console.ReadKey(true);
+			while (info.Key != ConsoleKey.Enter && info.Key != ConsoleKey.Escape)
+			{
+				if (info.Key == ConsoleKey.Backspace && buffer.Length > 0)
+				{
+					Console.SetCursorPosition(Console.CursorLeft - 1, Console.CursorTop);
+					Console.Write(" ");
+					Console.SetCursorPosition(Console.CursorLeft - 1, Console.CursorTop);
+					buffer.Remove(buffer.Length - 1, 1);
+					info = Console.ReadKey(true);
+				}
+				else
+				{
+					Console.Write(info.KeyChar);
+					buffer.Append(info.KeyChar);
+					info = Console.ReadKey(true);
+				}
+			}
+			if (info.Key == ConsoleKey.Escape)
+			{
+				StartMeny();
+			}
+
+			if (info.Key == ConsoleKey.Enter)
+			{
+				result = buffer.ToString();
+			}
+
+
+			Console.WriteLine();
+			return result;
 		}
 	}
 }
