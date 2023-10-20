@@ -14,12 +14,12 @@ namespace BankSystem
 	class CLI
 	{
 
-		public static List<BankAccount> Accounts = new List<BankAccount>();
+		private static List<BankAccount> Accounts = new List<BankAccount>();
 
 		/// <summary>
 		/// Load the accounts from the json file.
 		/// </summary>
-		public static void LoadAccounts()
+		private static void LoadAccounts()
 		{
 			FileInfo file = new FileInfo("./data.json");
 			//Check if the data file is empty.
@@ -301,7 +301,7 @@ namespace BankSystem
 			}
 
 			//Assign an ID to the account.
-			Accounts[Accounts.Count - 1].AccountID = Generator.AccountID(4);
+			Accounts[Accounts.Count - 1].AccountID = Generator.AccountID(4, Accounts);
 
 			//Save the new account to the json file.
 			DataSaver.WriteToJsonFile<List<BankAccount>>("./data.json", Accounts, false);
@@ -434,7 +434,13 @@ namespace BankSystem
 			StartMeny();
 
 		}
+		
 
+		/// <summary>
+		///String builer that acts like a readline but can also listen for specific key presses.
+		///If the user click escape it goes back to the start screen.
+		/// </summary>
+		/// <returns>Returns the input as a string></returns>
 		private static string readLineWithCancel()
 		{
 			string result = null;

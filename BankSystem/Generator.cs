@@ -15,19 +15,42 @@ namespace BankSystem
 		static Random rng = new Random();
 
 		/// <summary>
-		/// Generates an account id with the length of the parameter
+		/// Generates unique account id with the length of the parameter
 		/// </summary>
 		/// <param name="length">lkength of the id</param>
+		/// <param name="account">The other accounts to see if it makes a duplicate id</param>
 		/// <returns>Returns the id in string format</returns>
-		public static string AccountID(int length)
+		public static string AccountID(int length, List<BankAccount> account)
 		{
 			string chars = "qwertyuiopasdfghjklzxcvbnm1234567890";
 			string tmpID = "";
-			for (int i = 0; i < length; i++)
+
+			while (true)
 			{
-				tmpID += chars[rng.Next(0, chars.Length)];
+				int passed = 0;
+				tmpID = "";
+				for (int j = 0; j < length; j++)
+				{
+					tmpID += chars[rng.Next(0, chars.Length)];
+				}
+				if (account.Count == 0)
+				{
+					return tmpID;
+				}
+
+				for (int i = 0; i < account.Count; i++)
+				{
+					if (account[i].AccountID != tmpID)
+					{
+						passed++;
+					}
+				}
+				if (passed == account.Count)
+				{
+					return tmpID;
+				}
 			}
-			return tmpID;
+
 		}
 
 
