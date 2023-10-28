@@ -12,8 +12,8 @@ namespace BankSystem
 	/// </summary>
 	class Generator
 	{
-		static Random rng = new Random();
-
+		private static Random rng = new Random();
+		
 		/// <summary>
 		/// Generates unique account id with the length of the parameter
 		/// </summary>

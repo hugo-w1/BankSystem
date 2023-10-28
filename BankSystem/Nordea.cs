@@ -6,6 +6,9 @@ using System.Threading.Tasks;
 
 namespace BankSystem
 {
+	/// <summary>
+	/// Nordea classs
+	/// </summary>
 	class Nordea : BankAccount
 	{
 		public Nordea(string initalHolder, double initalBalance)

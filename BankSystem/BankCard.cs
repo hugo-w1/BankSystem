@@ -45,5 +45,11 @@ namespace BankSystem
 		{
 			get { return expirartionDate; }
 		}
+
+		public virtual void Transaction(BankAccount sender, BankAccount reciver, double amount)
+		{
+			Console.WriteLine("Transaction not avaible");
+			//Transaction method override in BankAccount Class.
+		}
 	}
 }

@@ -6,6 +6,11 @@ using System.Threading.Tasks;
 
 namespace BankSystem
 {
+
+
+	/// <summary>
+	/// Swedbank class
+	/// </summary>
 	class SwedBank : BankAccount
 	{
 		public SwedBank(string initalHolder, double initalBalance)

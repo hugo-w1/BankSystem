@@ -13,7 +13,6 @@ namespace BankSystem
 		static void Main(string[] args)
 		{
 			CLI.StartMeny();
-			Console.ReadLine();
 		}
 	}
 }

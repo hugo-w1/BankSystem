@@ -85,5 +85,14 @@ namespace BankSystem
 			}
 		}
 
+		public override void Transaction(BankAccount sender, BankAccount reciver, double amount)
+		{
+			amount = amount * (1 - sender.transactionFee); // deduct trasaction fee from amount
+			sender.Balance -= amount;
+			reciver.Balance += amount;
+			sender.TransactionHistory.Add($"[{DateTime.Now}] - Sent {amount} to {reciver.AccountHolder} [{reciver.AccountID}] Fee: {sender.transactionFee}%");
+			reciver.TransactionHistory.Add($"[{DateTime.Now}] - Recived {amount} from {sender.AccountHolder} [{sender.AccountID}] Fee: {sender.transactionFee}%");
+		}
+
 	}
 }

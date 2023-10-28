@@ -6,6 +6,9 @@ using System.Threading.Tasks;
 
 namespace BankSystem
 {
+	/// <summary>
+	/// SEB class
+	/// </summary>
 	class SEB : BankAccount
 	{
 		public SEB(string initalHolder, double initalBalance)

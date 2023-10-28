@@ -24,7 +24,7 @@ namespace BankSystem
 			FileInfo file = new FileInfo("./data.json");
 			//Check if the data file is empty.
 			//If it is empty, do not load it.
-			if (file.Length != 0)
+			if (file.Exists == true && file.Length != 0)
 			{
 				Accounts = DataSaver.ReadFromJsonFile<List<BankAccount>>("./data.json");
 
@@ -58,7 +58,7 @@ namespace BankSystem
 							CreateAccount();
 							break;
 						case 2:
-							ViewAccounts(Accounts);
+							ViewAccounts(Accounts, true);
 							break;
 						case 3:
 							Transaction();
@@ -100,7 +100,9 @@ namespace BankSystem
 				if (id == Accounts[i].AccountID)
 				{
 					tmpAccount = Accounts[i];
+					Console.ForegroundColor = ConsoleColor.Green;
 					Console.WriteLine($"Found Account {Accounts[i].AccountHolder} [{Accounts[i].AccountID}]");
+					Console.ResetColor();
 					return tmpAccount;
 				}
 			}
@@ -114,8 +116,10 @@ namespace BankSystem
 		private static void Transaction()
 		{
 
+			Console.Clear();
 			Console.ForegroundColor = ConsoleColor.Blue;
 			Console.WriteLine("-Transaction- Escape to abort");
+			Console.ResetColor();
 			if (Accounts.Count < 2)
 			{
 				Console.ForegroundColor = ConsoleColor.Red;
@@ -127,6 +131,22 @@ namespace BankSystem
 				StartMeny();
 			}
 
+			while (true)
+			{
+				Console.WriteLine("Do you want to view the available accounts? [y/n]");
+			
+				string tmpAnswer = ReadLineWithCancel().ToLower().Trim();
+				if (tmpAnswer == "y")
+				{
+					ViewAccounts(Accounts, false);
+					break;
+				}
+				else if(tmpAnswer == "n")
+				{
+					break;
+				}
+			}
+
 			string tmpSender = "";
 			string tmpReciver = "";
 			BankAccount sender = null;
@@ -136,13 +156,13 @@ namespace BankSystem
 			while (true)
 			{
 				Console.Write("Sender ID: ");
-				tmpSender = readLineWithCancel();
+				tmpSender = ReadLineWithCancel();
 				sender = FindAccount(tmpSender);
 				if (sender == null)
 				{
 					Console.ForegroundColor = ConsoleColor.Red;
 					Console.WriteLine($"Could not find account [{tmpSender}]");
-					Console.ForegroundColor = ConsoleColor.Blue;
+					Console.ResetColor();
 				}
 				else
 				{
@@ -155,57 +175,57 @@ namespace BankSystem
 			{
 
 				Console.Write("Reciver ID: ");
-				tmpReciver = readLineWithCancel();
+				tmpReciver = ReadLineWithCancel();
 				if (tmpReciver == tmpSender)
 				{
 					Console.ForegroundColor = ConsoleColor.Red;
 					Console.WriteLine("Cant send to the same account");
-					Console.ForegroundColor = ConsoleColor.Blue;
-				}
-				reciver = FindAccount(tmpReciver);
-				if (reciver == null)
-				{
-					Console.ForegroundColor = ConsoleColor.Red;
-					Console.WriteLine($"Could not find account [{tmpReciver}]");
-					Console.ForegroundColor = ConsoleColor.Blue;
+					Console.ResetColor();
 				}
 				else
 				{
-					break;
+					reciver = FindAccount(tmpReciver);
+					if (reciver == null)
+					{
+						Console.ForegroundColor = ConsoleColor.Red;
+						Console.WriteLine($"Could not find account [{tmpReciver}]");
+						Console.ResetColor();
+					}
+
+					else
+					{
+						break;
+					}
 				}
 
-
 			}
-
-
-
-
 			double tmpAmount = 0;
 			while (true)
 			{
 				try
 				{
 					Console.Write("Amount: ");
-					tmpAmount = double.Parse(readLineWithCancel());
+					tmpAmount = double.Parse(ReadLineWithCancel());
 					if (tmpAmount > sender.Balance)
 					{
 						throw new Exception("Insufficient funds");
 					}
+					if (tmpAmount <= 0)
+					{
+						throw new Exception("Invalid amount");
+					}
 					else
 					{
-						sender.Balance -= tmpAmount;
-						reciver.Balance += tmpAmount;
+						//Create a new transaction on the senders behalf.
+						sender.Transaction(sender, reciver, tmpAmount);
 
-						sender.TransactionHistory.Add($"[{DateTime.Now}] - Sent {tmpAmount} to {reciver.AccountHolder} [{reciver.AccountID}]");
-						reciver.TransactionHistory.Add($"[{DateTime.Now}] - Recived {tmpAmount} from {sender.AccountHolder} [{sender.AccountID}]");
 
+						//Save to the json file.
+						DataSaver.WriteToJsonFile<List<BankAccount>>("./data.json", Accounts, false);
 
 						Console.ForegroundColor = ConsoleColor.Green;
 						Console.WriteLine($"{sender.AccountHolder} sent ${tmpAmount} to {reciver.AccountHolder}");
 						Console.ForegroundColor = ConsoleColor.White;
-
-						//Save to the json file.
-						DataSaver.WriteToJsonFile<List<BankAccount>>("./data.json", Accounts, false);
 
 						break;
 					}
@@ -214,7 +234,7 @@ namespace BankSystem
 				{
 					Console.ForegroundColor = ConsoleColor.Red;
 					Console.WriteLine(e.Message);
-					Console.ForegroundColor = ConsoleColor.Blue;
+					Console.ResetColor();
 
 				}
 			}
@@ -231,6 +251,7 @@ namespace BankSystem
 		/// </summary>
 		private static void CreateAccount()
 		{
+			Console.Clear();
 			Console.ForegroundColor = ConsoleColor.Blue;
 			Console.WriteLine("-Account Creation-");
 			Console.ForegroundColor = ConsoleColor.White;
@@ -239,7 +260,7 @@ namespace BankSystem
 			while (true)
 			{
 				Console.Write("Account Holder: ");
-				tmpAccountHolder = readLineWithCancel();
+				tmpAccountHolder = ReadLineWithCancel();
 				if (tmpAccountHolder.Trim() != "")
 				{
 					break;
@@ -250,7 +271,7 @@ namespace BankSystem
 				try
 				{
 					Console.Write("Account Balance: ");
-					tmpBalance = double.Parse(readLineWithCancel());
+					tmpBalance = double.Parse(ReadLineWithCancel());
 					if (tmpBalance > 1000000)
 					{
 						throw new Exception("You cant have over one million");
@@ -271,7 +292,7 @@ namespace BankSystem
 				Console.WriteLine("[1 Swedbank] [2 SEB] [3 Nordea]");
 				try
 				{
-					tmpBank = int.Parse(readLineWithCancel());
+					tmpBank = int.Parse(ReadLineWithCancel());
 					if (tmpBank < 1 || tmpBank > 3)
 					{
 						throw new Exception("Chose between 1-3");
@@ -307,7 +328,7 @@ namespace BankSystem
 			DataSaver.WriteToJsonFile<List<BankAccount>>("./data.json", Accounts, false);
 
 			Console.ForegroundColor = ConsoleColor.Green;
-			Console.WriteLine($"Account Created {Accounts[Accounts.Count - 1].AccountHolder}");
+			Console.WriteLine($"Account Created {Accounts[Accounts.Count - 1].AccountHolder} [{Accounts[Accounts.Count - 1].BankName}]");
 			Console.ForegroundColor = ConsoleColor.White;
 			Console.WriteLine("\nClick Return To Return Home");
 			Console.ReadLine();
@@ -321,6 +342,10 @@ namespace BankSystem
 		/// </summary>
 		private static void ViewHistory()
 		{
+			Console.Clear();
+			Console.ForegroundColor = ConsoleColor.Blue;
+			Console.WriteLine("-View History-");
+			Console.ResetColor();
 			BankAccount account = null;
 			if (Accounts.Count < 1)
 			{
@@ -330,10 +355,27 @@ namespace BankSystem
 			}
 			else
 			{
+
+				while (true)
+				{
+					Console.WriteLine("Do you want to view the available accounts? [y/n]");
+
+					string tmpAnswer = ReadLineWithCancel().ToLower().Trim();
+					if (tmpAnswer == "y")
+					{
+						ViewAccounts(Accounts, false);
+						break;
+					}
+					else if (tmpAnswer == "n")
+					{
+						break;
+					}
+				}
+
 				while (true)
 				{
 					Console.Write("Account Id: ");
-					string tmpId = readLineWithCancel();
+					string tmpId = ReadLineWithCancel();
 					account = FindAccount(tmpId);
 					if (account == null)
 					{
@@ -360,22 +402,33 @@ namespace BankSystem
 					Console.BackgroundColor = ConsoleColor.Black;
 					Console.ForegroundColor = ConsoleColor.White;
 				}
-				Console.WriteLine("\nClick Return To Return Home");
-				Console.ReadLine();
-				StartMeny();
 			}
+
+			Console.WriteLine("\nClick Return To Return Home");
+			Console.ReadLine();
+			StartMeny();
 
 		}
 
 		/// <summary>
 		/// Displays all of the accounts in a list.
+		/// menyOption is true if the method should go back home direct after.
+		/// menyOption is false if it is used from another method that should keep running.
 		/// </summary>
-		/// <param name="Accounts">The accounts to show</param>
-		private static void ViewAccounts(List<BankAccount> Accounts)
+		/// <param name="accounts">The accounts to show</param>
+		private static void ViewAccounts(List<BankAccount> accounts, bool menyOption)
 		{
-			Console.Clear();
-
-			for (int i = 0; i < Accounts.Count; i++)
+			if (menyOption)
+			{
+				Console.Clear();
+			}
+			if(accounts.Count == 0)
+			{
+				Console.ForegroundColor = ConsoleColor.Red;
+				Console.Write("No accounts available");
+				Console.ResetColor();
+			}
+			for (int i = 0; i < accounts.Count; i++)
 			{
 				//Make Odd entries White bg and black fg for better Readability.
 				if (i % 2 == 0)
@@ -383,17 +436,19 @@ namespace BankSystem
 					Console.BackgroundColor = ConsoleColor.White;
 					Console.ForegroundColor = ConsoleColor.Black;
 				}
-				Console.WriteLine($"{i + 1}: {Accounts[i].AccountHolder}  [{Accounts[i].AccountID}] Balance: ${Accounts[i].Balance}");
+				Console.WriteLine($"{i + 1}: {accounts[i].AccountHolder}  [{accounts[i].AccountID}] Balance: ${accounts[i].Balance}");
 
 				Console.BackgroundColor = ConsoleColor.Black;
 				Console.ForegroundColor = ConsoleColor.White;
 			}
-			Console.WriteLine("\nClick Return To Return Home");
-			Console.ReadLine();
-
-			StartMeny();
+			if (menyOption)
+			{
+				Console.WriteLine("\nClick Return To Return Home");
+				Console.ReadLine();
+				StartMeny();
+			}
 		}
-
+			
 
 		/// <summary>
 		/// Asks the user for an id.
@@ -401,11 +456,32 @@ namespace BankSystem
 		/// </summary>
 		private static void PrintAccountDetails()
 		{
+			Console.Clear();
+			Console.ForegroundColor = ConsoleColor.Blue;
+			Console.WriteLine("-Account Details-");
+			Console.ResetColor();
+
+			while (true)
+			{
+				Console.WriteLine("Do you want to view the available accounts? [y/n]");
+
+				string tmpAnswer = ReadLineWithCancel().ToLower().Trim();
+				if (tmpAnswer == "y")
+				{
+					ViewAccounts(Accounts, false);
+					break;
+				}
+				else if (tmpAnswer == "n")
+				{
+					break;
+				}
+			}
+
 			BankAccount account = null;
 			while (true)
 			{
 				Console.Write("Account ID: ");
-				string accoutid = readLineWithCancel();
+				string accoutid = ReadLineWithCancel();
 				account = FindAccount(accoutid);
 				if (account == null)
 				{
@@ -434,14 +510,14 @@ namespace BankSystem
 			StartMeny();
 
 		}
-		
+
 
 		/// <summary>
-		///String builer that acts like a readline but can also listen for specific key presses.
+		///String builer that acts like a normal readline but can also listen for specific key presses.
 		///If the user click escape it goes back to the start screen.
 		/// </summary>
 		/// <returns>Returns the input as a string></returns>
-		private static string readLineWithCancel()
+		private static string ReadLineWithCancel()
 		{
 			string result = null;
 
